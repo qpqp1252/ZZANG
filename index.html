@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>66일 습관달력</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Jua", sans-serif;
+            background-image: url('https://example.com/background.jpg'); /* 무료 배경 이미지 링크로 변경 */
+            background-size: cover;
+            color: white;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 3em;
+            text-shadow: 2px 2px 0 black;
+        }
+        .day {
+            margin: 10px 0;
+            font-size: 1.5em;
+            text-shadow: 1px 1px 0 black;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            display: inline-block;
+            width: calc(100% - 40px);
+            max-width: 400px;
+        }
+        .checkbox {
+            margin-left: 10px;
+        }
+        .reset-button, .time-button {
+            position: absolute;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .reset-button {
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #f7d9a8);
+            color: white;
+        }
+        .time-button {
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #4caf50, #81c784);
+            color: white;
+        }
+        .reset-button:hover, .time-button:hover {
+            opacity: 0.8;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .modal-content {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .congratulations {
+            display: none;
+            font-size: 2em;
+            margin-top: 20px;
+            color: yellow;
+            text-shadow: 2px 2px 0 black;
+        }
+    </style>
+</head>
+<body>
+    <h1>66일 습관달력 양진호</h1>
+    <button class="reset-button" onclick="showModal()">실패 및 초기화</button>
+    <button class="time-button" onclick="showRemainingTime()">남은 게임 시간</button>
+    <div id="calendar"></div>
+    <div class="congratulations" id="congratulationsMessage">
+        축하합니다! 양진호님의 66일차 달성을 축하합니다!<br>
+        엄마와 아빠는 100만원 상당의 양진호님이 원하는 선물을 지급해주십시오.
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2>비밀번호 4자리 숫자를 입력하세요</h2>
+            <input type="password" id="password" maxlength="4" pattern="\d{4}">
+            <button onclick="resetCheckboxes()">확인</button>
+            <button onclick="closeModal()">취소</button>
+        </div>
+    </div>
+
+    <script>
+        const calendar = document.getElementById('calendar');
+        const totalDays = 66;
+        let savedCheckboxes = JSON.parse(localStorage.getItem('checkboxes')) || Array(totalDays).fill(false);
+        const lastResetDate = localStorage.getItem('lastResetDate') || '';
+
+        // 시작 날짜를 2024년 12월 20일로 설정
+        let startDate = new Date('2024-12-20');
+        
+        // 체크박스와 일차 생성
+        function generateCalendar() {
+            calendar.innerHTML = ''; // 기존 내용 초기화
+            for (let i = 1; i <= totalDays; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+
+                // 날짜 계산
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + (i - 1));
+                const formattedDate = `${currentDate.getFullYear()}.${String(currentDate.getMonth() + 1).padStart(2, '0')}.${String(currentDate.getDate()).padStart(2, '0')}`;
+                
+                // 메시지 추가
+                const message = (i % 7 === 0) ? "게임 시간 30분 적립" : "";
+                const resetInfo = i === 1 && lastResetDate ? ` (최근 초기화: ${lastResetDate})` : '';
+                dayDiv.innerHTML = `${i}일차 (${formattedDate})${resetInfo} <input type="checkbox" class="checkbox" ${savedCheckboxes[i - 1] ? 'checked' : ''} data-day="${i}"><br>${message}`;
+                calendar.appendChild(dayDiv);
+            }
+
+            // 체크박스 상태 저장
+            document.querySelectorAll('.checkbox').forEach((checkbox, index) => {
+                checkbox.addEventListener('change', () => {
+                    savedCheckboxes[index] = checkbox.checked;
+                    localStorage.setItem('checkboxes', JSON.stringify(savedCheckboxes));
+
+                    // 66일차 체크박스가 체크되었는지 확인
+                    if (index === 65 && checkbox.checked) {
+                        alert('축하합니다! 양진호님의 66일차 달성을 축하합니다!\n엄마와 아빠는 100만원 상당의 양진호님이 원하는 선물을 지급해주십시오.');
+                    }
+                });
+            });
+        }
+
+        // 모달 열기
+        function showModal() {
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // 체크박스 초기화
+        function resetCheckboxes() {
+            const password = document.getElementById('password').value;
+            if (password === '1252') {
+                for (let i = 0; i < totalDays; i++) {
+                    savedCheckboxes[i] = false;
+                }
+                localStorage.setItem('checkboxes', JSON.stringify(savedCheckboxes));
+                
+                const currentDate = new Date();
+                const formattedDate = `${currentDate.getFullYear()}.${String(currentDate.getMonth() + 1).padStart(2, '0')}.${String(currentDate.getDate()).padStart(2, '0')}`;
+                localStorage.setItem('lastResetDate', formattedDate);
+                
+                location.reload();
+            } else if (password === '6439') {
+                startDate = new Date('2024-12-20'); // 사용자 정의 시작 날짜
+                savedCheckboxes = Array(totalDays).fill(false);
+                localStorage.setItem('checkboxes', JSON.stringify(savedCheckboxes));
+                localStorage.setItem('lastResetDate', ''); // 초기화 후 날짜 초기화
+                generateCalendar();
+                closeModal();
+            } else {
+                alert('비밀번호가 틀렸습니다.');
+            }
+        }
+
+        // 남은 게임 시간 표시
+        function showRemainingTime() {
+            const remainingTime = "0분 남았습니다!"; // 초기 게임 시간을 0분으로 설정
+            alert(remainingTime);
+        }
+
+        // 초기화 시 달력 생성
+        generateCalendar();
+    </script>
+</body>
+</html>
